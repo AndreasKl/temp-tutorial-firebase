@@ -18,6 +18,7 @@ package com.google.firebase.codelab.friendlychat
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ProgressBar
@@ -39,7 +40,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var manager: LinearLayoutManager
     private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseDatabase
     private lateinit var adapter: FriendlyMessageAdapter
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
@@ -63,10 +63,6 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-
-
-
-
         // Initialize Firebase Auth and check if the user is signed in
         auth = Firebase.auth
         if (auth.currentUser == null) {
@@ -76,14 +72,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize Realtime Database and FirebaseRecyclerAdapter
-        db = Firebase.database
-        val messagesRef = db.reference.child(MESSAGES_CHILD)
 
         // The FirebaseRecyclerAdapter class and options come from the FirebaseUI library
         // See: https://github.com/firebase/FirebaseUI-Android
         val options = FirebaseRecyclerOptions.Builder<FriendlyMessage>()
-            .setQuery(messagesRef, FriendlyMessage::class.java)
+            .setQuery(messagesDB(), FriendlyMessage::class.java)
             .build()
         adapter = FriendlyMessageAdapter(options, getUserName())
         binding.progressBar.visibility = ProgressBar.INVISIBLE
@@ -91,6 +84,23 @@ class MainActivity : AppCompatActivity() {
         manager.stackFromEnd = true
         binding.messageRecyclerView.layoutManager = manager
         binding.messageRecyclerView.adapter = adapter
+
+        // Disable the send button when there's no text in the input field
+        // See MyButtonObserver for details
+        binding.messageEditText.addTextChangedListener(MyButtonObserver(binding.sendButton))
+
+        // When the send button is clicked, send a text message
+        binding.sendButton.setOnClickListener {
+            val friendlyMessage = FriendlyMessage(
+                binding.messageEditText.text.toString(),
+                getUserName(),
+                getPhotoUrl(),
+                null /* no image */
+            )
+            messagesDB().push().setValue(friendlyMessage)
+            binding.messageEditText.setText("")
+        }
+
 
         // Scroll down when a new message arrives
         // See MyScrollToBottomObserver for details
@@ -110,6 +120,8 @@ class MainActivity : AppCompatActivity() {
             openDocument.launch(arrayOf("image/*"))
         }
     }
+
+    private fun messagesDB() = Firebase.database.reference.child(MESSAGES_CHILD)
 
     public override fun onStart() {
         super.onStart()
@@ -148,6 +160,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun onImageSelected(uri: Uri) {
+        Log.w("mooep", uri.toString())
         // TODO: implement
     }
 
