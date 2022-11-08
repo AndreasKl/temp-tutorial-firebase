@@ -47,6 +47,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var db: FirebaseDatabase
     private lateinit var adapter: FriendlyMessageAdapter
 
+
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         uri?.let { onImageSelected(it) }
     }

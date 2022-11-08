@@ -20,12 +20,16 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.firebase.ui.auth.AuthUI
+import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.codelab.friendlychat.databinding.ActivityMainBinding
+import com.google.firebase.codelab.friendlychat.model.FriendlyMessage
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
@@ -35,6 +39,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var manager: LinearLayoutManager
     private lateinit var auth: FirebaseAuth
+    private lateinit var db: FirebaseDatabase
+    private lateinit var adapter: FriendlyMessageAdapter
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         uri?.let { onImageSelected(it) }
@@ -56,6 +62,12 @@ class MainActivity : AppCompatActivity() {
             Firebase.storage.useEmulator("10.0.2.2", 9199)
         }
 
+
+
+
+
+
+        // Initialize Firebase Auth and check if the user is signed in
         auth = Firebase.auth
         if (auth.currentUser == null) {
             // Not signed in, launch the Sign In activity
@@ -64,11 +76,27 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        // Initialize Firebase Auth and check if the user is signed in
-        // TODO: implement
-
         // Initialize Realtime Database and FirebaseRecyclerAdapter
-        // TODO: implement
+        db = Firebase.database
+        val messagesRef = db.reference.child(MESSAGES_CHILD)
+
+        // The FirebaseRecyclerAdapter class and options come from the FirebaseUI library
+        // See: https://github.com/firebase/FirebaseUI-Android
+        val options = FirebaseRecyclerOptions.Builder<FriendlyMessage>()
+            .setQuery(messagesRef, FriendlyMessage::class.java)
+            .build()
+        adapter = FriendlyMessageAdapter(options, getUserName())
+        binding.progressBar.visibility = ProgressBar.INVISIBLE
+        manager = LinearLayoutManager(this)
+        manager.stackFromEnd = true
+        binding.messageRecyclerView.layoutManager = manager
+        binding.messageRecyclerView.adapter = adapter
+
+        // Scroll down when a new message arrives
+        // See MyScrollToBottomObserver for details
+        adapter.registerAdapterDataObserver(
+            MyScrollToBottomObserver(binding.messageRecyclerView, adapter, manager)
+        )
 
         // Disable the send button when there's no text in the input field
         // See MyButtonObserver for details
@@ -94,11 +122,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     public override fun onPause() {
+        adapter.stopListening()
         super.onPause()
     }
 
     public override fun onResume() {
         super.onResume()
+        adapter.startListening()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {

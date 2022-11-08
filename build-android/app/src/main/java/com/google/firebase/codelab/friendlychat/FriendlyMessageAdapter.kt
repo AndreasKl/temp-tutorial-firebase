@@ -71,7 +71,7 @@ class FriendlyMessageAdapter(
 
             binding.messengerTextView.text = item.name ?: ANONYMOUS
             if (item.photoUrl != null) {
-                loadImageIntoView(binding.messengerImageView, item.photoUrl)
+                loadImageIntoView(binding.messengerImageView, item.photoUrl!!)
             } else {
                 binding.messengerImageView.setImageResource(R.drawable.ic_account_circle_black_36dp)
             }
