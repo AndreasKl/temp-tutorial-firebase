@@ -30,8 +30,10 @@ import com.google.firebase.ktx.Firebase
 
 class SignInActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySignInBinding
+
     private val signIn: ActivityResultLauncher<Intent> =
         registerForActivityResult(FirebaseAuthUIActivityResultContract(), this::onSignInResult)
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,6 +47,8 @@ class SignInActivity : AppCompatActivity() {
     public override fun onStart() {
         super.onStart()
 
+        // If there is no signed in user, launch FirebaseUI
+        // Otherwise head to MainActivity
         if (Firebase.auth.currentUser == null) {
             // Sign in with FirebaseUI, see docs for more details:
             // https://firebase.google.com/docs/auth/android/firebaseui
@@ -63,9 +67,7 @@ class SignInActivity : AppCompatActivity() {
         }
     }
 
-    private fun signIn() {
-        // TODO: implement
-    }
+
 
     private fun onSignInResult(result: FirebaseAuthUIAuthenticationResult) {
         if (result.resultCode == RESULT_OK) {

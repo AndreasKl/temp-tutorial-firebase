@@ -108,9 +108,6 @@ class MainActivity : AppCompatActivity() {
             MyScrollToBottomObserver(binding.messageRecyclerView, adapter, manager)
         )
 
-        // Disable the send button when there's no text in the input field
-        // See MyButtonObserver for details
-        binding.messageEditText.addTextChangedListener(MyButtonObserver(binding.sendButton))
 
         // When the image button is clicked, launch the image picker
         binding.addMessageImageView.setOnClickListener {
@@ -122,6 +119,7 @@ class MainActivity : AppCompatActivity() {
 
     public override fun onStart() {
         super.onStart()
+        // Check if user is signed in.
         if (auth.currentUser == null) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
