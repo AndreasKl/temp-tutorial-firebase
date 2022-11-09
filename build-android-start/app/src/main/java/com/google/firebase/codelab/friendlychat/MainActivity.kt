@@ -35,6 +35,9 @@ import com.google.firebase.codelab.friendlychat.model.FriendlyMessage
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.HttpsCallableResult
+import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
 import com.google.firebase.storage.ktx.storage
@@ -45,6 +48,8 @@ class MainActivity : AppCompatActivity() {
 
     private val auth: FirebaseAuth
     private val db: FirebaseDatabase
+    private val functions: FirebaseFunctions
+
     private lateinit var adapter: FriendlyMessageAdapter
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
@@ -56,10 +61,12 @@ class MainActivity : AppCompatActivity() {
             Firebase.auth.useEmulator("10.0.2.2", 9099)
             Firebase.storage.useEmulator("10.0.2.2", 9199)
             Firebase.database.useEmulator("10.0.2.2", 9000)
+            Firebase.functions.useEmulator("10.0.2.2", 5001)
         }
 
         db = Firebase.database
         auth = Firebase.auth
+        functions = Firebase.functions
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -120,8 +127,21 @@ class MainActivity : AppCompatActivity() {
         binding.addMessageImageView.setOnClickListener {
             openDocument.launch(arrayOf("image/*"))
         }
+
+
+        callServerlessFunction()
+
     }
 
+    private fun callServerlessFunction() {
+        functions.getHttpsCallable("helloWorld")
+            .call()
+            .addOnCompleteListener {
+                val result: HttpsCallableResult = it.result
+                Log.d("FUNCTIONS", result.data.toString())
+                Log.d("FUNCTIONS", result.data?.javaClass.toString())
+            }
+    }
 
 
     public override fun onStart() {
