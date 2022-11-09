@@ -5,5 +5,11 @@ import * as functions from "firebase-functions";
 //
 export const helloWorld = functions.https.onRequest((request, response) => {
   functions.logger.info("Hello logs!", {structuredData: true});
-  response.send(request.headers);
+  response.send("Hello from Firebase!");
+});
+
+
+export const helloCallableWorld = functions.https.onCall((data, context) => {
+  functions.logger.info("Hello logs!", {structuredData: true});
+  return "Hello from Firebase!";
 });

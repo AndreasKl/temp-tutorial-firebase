@@ -57,6 +57,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     init {
+
+        db = Firebase.database
+        auth = Firebase.auth
+        functions = Firebase.functions
+
         if (BuildConfig.DEBUG) {
             Firebase.auth.useEmulator("10.0.2.2", 9099)
             Firebase.storage.useEmulator("10.0.2.2", 9199)
@@ -64,9 +69,6 @@ class MainActivity : AppCompatActivity() {
             Firebase.functions.useEmulator("10.0.2.2", 5001)
         }
 
-        db = Firebase.database
-        auth = Firebase.auth
-        functions = Firebase.functions
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -105,6 +107,7 @@ class MainActivity : AppCompatActivity() {
 
         // When the send button is clicked, send a text message
         binding.sendButton.setOnClickListener {
+            callServerlessFunction()
             val friendlyMessage = FriendlyMessage(
                 binding.messageEditText.text.toString(),
                 getUserName(),
@@ -129,19 +132,20 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-        callServerlessFunction()
+
 
     }
 
     private fun callServerlessFunction() {
-        functions.getHttpsCallable("helloWorld")
+        functions.getHttpsCallable("helloCallableWorld")
             .call()
-            .addOnCompleteListener {
-                val result: HttpsCallableResult = it.result
-                Log.d("FUNCTIONS", result.data.toString())
-                Log.d("FUNCTIONS", result.data?.javaClass.toString())
+            .addOnFailureListener {
+            Log.wtf("FF", it)
+        }
+            .addOnSuccessListener {
+                Log.d("FUNCTIONNSSSS:",it.data.toString())
             }
-    }
+   }
 
 
     public override fun onStart() {
