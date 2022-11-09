@@ -41,8 +41,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var manager: LinearLayoutManager
     private lateinit var auth: FirebaseAuth
-    private lateinit var adapter: FriendlyMessageAdapter
     private lateinit var db: FirebaseDatabase
+    private lateinit var adapter: FriendlyMessageAdapter
+
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         uri?.let { onImageSelected(it) }
@@ -55,6 +56,8 @@ class MainActivity : AppCompatActivity() {
         // See: https://developer.android.com/topic/libraries/view-binding
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        db = Firebase.database
 
 
         if (BuildConfig.DEBUG) {
@@ -72,13 +75,14 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        db = Firebase.database
+        val messagesRef = db.reference.child(MESSAGES_CHILD)
+
 
         // The FirebaseRecyclerAdapter class and options come from the FirebaseUI library
         // See: https://github.com/firebase/FirebaseUI-Android
         val options = FirebaseRecyclerOptions.Builder<FriendlyMessage>()
             .setQuery(
-                db.reference.child(MESSAGES_CHILD),
+                messagesRef,
                 FriendlyMessage::class.java
             )
             .build()
@@ -101,7 +105,7 @@ class MainActivity : AppCompatActivity() {
                 getPhotoUrl(),
                 null /* no image */
             )
-            db.reference.child(MESSAGES_CHILD).push().setValue(friendlyMessage)
+            messagesRef.push().setValue(friendlyMessage)
             binding.messageEditText.setText("")
         }
 
