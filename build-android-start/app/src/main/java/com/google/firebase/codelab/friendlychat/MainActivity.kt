@@ -40,13 +40,24 @@ import com.google.firebase.storage.ktx.storage
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var manager: LinearLayoutManager
-    private lateinit var auth: FirebaseAuth
-    private lateinit var db: FirebaseDatabase
-    private lateinit var adapter: FriendlyMessageAdapter
 
+    private val auth: FirebaseAuth
+    private val db: FirebaseDatabase
+    private lateinit var adapter: FriendlyMessageAdapter
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         uri?.let { onImageSelected(it) }
+    }
+
+    init {
+        if (BuildConfig.DEBUG) {
+            Firebase.auth.useEmulator("10.0.2.2", 9099)
+            Firebase.storage.useEmulator("10.0.2.2", 9199)
+            Firebase.database.useEmulator("10.0.2.2", 9000)
+        }
+
+        db = Firebase.database
+        auth = Firebase.auth
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -57,17 +68,6 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        db = Firebase.database
-
-
-        if (BuildConfig.DEBUG) {
-            Firebase.auth.useEmulator("10.0.2.2", 9099)
-            Firebase.storage.useEmulator("10.0.2.2", 9199)
-            db.useEmulator("10.0.2.2", 9000)
-        }
-
-        // Initialize Firebase Auth and check if the user is signed in
-        auth = Firebase.auth
         if (auth.currentUser == null) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
@@ -75,14 +75,11 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val messagesRef = db.reference.child(MESSAGES_CHILD)
-
-
         // The FirebaseRecyclerAdapter class and options come from the FirebaseUI library
         // See: https://github.com/firebase/FirebaseUI-Android
         val options = FirebaseRecyclerOptions.Builder<FriendlyMessage>()
             .setQuery(
-                messagesRef,
+                db.reference.child(MESSAGES_CHILD),
                 FriendlyMessage::class.java
             )
             .build()
@@ -105,7 +102,7 @@ class MainActivity : AppCompatActivity() {
                 getPhotoUrl(),
                 null /* no image */
             )
-            messagesRef.push().setValue(friendlyMessage)
+            db.reference.child(MESSAGES_CHILD).push().setValue(friendlyMessage)
             binding.messageEditText.setText("")
         }
 
@@ -166,7 +163,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Uri: $uri")
         val user = auth.currentUser
         val tempMessage = FriendlyMessage(null, getUserName(), getPhotoUrl(), LOADING_IMAGE_URL)
-        Firebase.database.reference.child(MESSAGES_CHILD)
+        db.reference.child(MESSAGES_CHILD)
             .push()
             .setValue(
                 tempMessage,
@@ -200,7 +197,7 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { uri ->
                         val friendlyMessage =
                             FriendlyMessage(null, getUserName(), getPhotoUrl(), uri.toString())
-                        Firebase.database.reference.child(MESSAGES_CHILD)
+                        db.reference.child(MESSAGES_CHILD)
                             .child(key!!)
                             .setValue(friendlyMessage)
                     }
