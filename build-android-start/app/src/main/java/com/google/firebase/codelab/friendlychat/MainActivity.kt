@@ -31,6 +31,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.codelab.friendlychat.databinding.ActivityMainBinding
 import com.google.firebase.codelab.friendlychat.model.FriendlyMessage
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
@@ -41,13 +42,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var manager: LinearLayoutManager
     private lateinit var auth: FirebaseAuth
     private lateinit var adapter: FriendlyMessageAdapter
+    private lateinit var db: FirebaseDatabase
 
     private val openDocument = registerForActivityResult(MyOpenDocumentContract()) { uri ->
         uri?.let { onImageSelected(it) }
     }
 
-    // TODO: implement Firebase instance variables
-    private fun messagesDB() = Firebase.database.reference.child(MESSAGES_CHILD)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -56,12 +56,12 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+
         if (BuildConfig.DEBUG) {
-            Firebase.database.useEmulator("10.0.2.2", 9000)
             Firebase.auth.useEmulator("10.0.2.2", 9099)
             Firebase.storage.useEmulator("10.0.2.2", 9199)
+            db.useEmulator("10.0.2.2", 9000)
         }
-
 
         // Initialize Firebase Auth and check if the user is signed in
         auth = Firebase.auth
@@ -72,11 +72,15 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
+        db = Firebase.database
 
         // The FirebaseRecyclerAdapter class and options come from the FirebaseUI library
         // See: https://github.com/firebase/FirebaseUI-Android
         val options = FirebaseRecyclerOptions.Builder<FriendlyMessage>()
-            .setQuery(messagesDB(), FriendlyMessage::class.java)
+            .setQuery(
+                db.reference.child(MESSAGES_CHILD),
+                FriendlyMessage::class.java
+            )
             .build()
         adapter = FriendlyMessageAdapter(options, getUserName())
         binding.progressBar.visibility = ProgressBar.INVISIBLE
@@ -97,7 +101,7 @@ class MainActivity : AppCompatActivity() {
                 getPhotoUrl(),
                 null /* no image */
             )
-            messagesDB().push().setValue(friendlyMessage)
+            db.reference.child(MESSAGES_CHILD).push().setValue(friendlyMessage)
             binding.messageEditText.setText("")
         }
 
@@ -158,7 +162,7 @@ class MainActivity : AppCompatActivity() {
         Log.d(TAG, "Uri: $uri")
         val user = auth.currentUser
         val tempMessage = FriendlyMessage(null, getUserName(), getPhotoUrl(), LOADING_IMAGE_URL)
-        messagesDB()
+        Firebase.database.reference.child(MESSAGES_CHILD)
             .push()
             .setValue(
                 tempMessage,
@@ -192,7 +196,7 @@ class MainActivity : AppCompatActivity() {
                     .addOnSuccessListener { uri ->
                         val friendlyMessage =
                             FriendlyMessage(null, getUserName(), getPhotoUrl(), uri.toString())
-                        messagesDB()
+                        Firebase.database.reference.child(MESSAGES_CHILD)
                             .child(key!!)
                             .setValue(friendlyMessage)
                     }
