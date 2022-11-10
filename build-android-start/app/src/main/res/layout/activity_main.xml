@@ -24,15 +24,15 @@
 
         <EditText
             android:id="@+id/messageEditText"
-            android:layout_width="0dp"
+            android:layout_width="294dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:layout_margin="10dp"
             android:layout_gravity="center"
-            android:padding="10dp"
+            android:layout_margin="10dp"
+            android:layout_weight="1"
             android:background="@drawable/edit_text_shadow"
             android:hint="Say something..."
-            android:inputType="text" />
+            android:inputType="text"
+            android:padding="10dp" />
 
         <ImageView
             android:id="@+id/sendButton"
@@ -41,6 +41,17 @@
             android:layout_gravity="center"
             android:enabled="false"
             android:src="@drawable/outline_send_gray_24" />
+
+        <ImageView
+            android:id="@+id/callFunctionButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_weight="1"
+            android:enabled="false"
+            android:src="@drawable/outline_send_gray_24"
+            ads:srcCompat="@drawable/ic_add_black_24dp"
+            tools:srcCompat="@drawable/ic_add_black_24dp" />
 
     </LinearLayout>
 

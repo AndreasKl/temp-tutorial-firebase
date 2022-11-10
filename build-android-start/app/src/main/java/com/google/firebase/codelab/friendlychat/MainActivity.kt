@@ -15,7 +15,6 @@
  */
 package com.google.firebase.codelab.friendlychat
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -25,7 +24,6 @@ import android.view.MenuItem
 import android.widget.ProgressBar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.firebase.ui.auth.AuthUI
 import com.firebase.ui.database.FirebaseRecyclerOptions
 import com.google.firebase.auth.FirebaseAuth
@@ -36,7 +34,6 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.functions.FirebaseFunctions
-import com.google.firebase.functions.HttpsCallableResult
 import com.google.firebase.functions.ktx.functions
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.StorageReference
@@ -79,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (auth.currentUser == null) {
+        if (isLoggedIn()) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
             finish()
@@ -107,7 +104,7 @@ class MainActivity : AppCompatActivity() {
 
         // When the send button is clicked, send a text message
         binding.sendButton.setOnClickListener {
-            callServerlessFunction()
+
             val friendlyMessage = FriendlyMessage(
                 binding.messageEditText.text.toString(),
                 getUserName(),
@@ -118,6 +115,9 @@ class MainActivity : AppCompatActivity() {
             binding.messageEditText.setText("")
         }
 
+        binding.callFunctionButton.setOnClickListener {
+            callServerlessFunction()
+        }
 
         // Scroll down when a new message arrives
         // See MyScrollToBottomObserver for details
@@ -130,34 +130,36 @@ class MainActivity : AppCompatActivity() {
         binding.addMessageImageView.setOnClickListener {
             openDocument.launch(arrayOf("image/*"))
         }
-
-
-
-
     }
 
     private fun callServerlessFunction() {
+        Log.d("FUNCTIONNSSSS","Start function...")
         functions.getHttpsCallable("helloCallableWorld")
             .call()
-            .addOnFailureListener {
-            Log.wtf("FF", it)
-        }
-            .addOnSuccessListener {
-                Log.d("FUNCTIONNSSSS:",it.data.toString())
-            }
-   }
+            .continueWith { task ->
+                // This continuation runs on either success or failure, but if the task
+                // has failed then result will throw an Exception which will be
+                // propagated down.
+                val result = task.result?.data as String
+                Log.d("FUNCTIONNSSSS:", result)
+                result
+            }.run {  }
+        Log.d("FUNCTIONNSSSS","End function...")
+    }
 
 
     public override fun onStart() {
         super.onStart()
         // Check if user is signed in.
-        if (auth.currentUser == null) {
+        if (isLoggedIn()) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
             finish()
             return
         }
     }
+
+    private fun isLoggedIn() = auth.currentUser == null || auth.currentUser?.isAnonymous == true
 
     public override fun onPause() {
         adapter.stopListening()
