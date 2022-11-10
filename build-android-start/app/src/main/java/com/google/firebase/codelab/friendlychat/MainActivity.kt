@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        if (isLoggedIn()) {
+        if (auth.currentUser == null || auth.currentUser?.isAnonymous == true) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
             finish()
@@ -151,15 +151,13 @@ class MainActivity : AppCompatActivity() {
     public override fun onStart() {
         super.onStart()
         // Check if user is signed in.
-        if (isLoggedIn()) {
+        if (auth.currentUser == null || auth.currentUser?.isAnonymous == true) {
             // Not signed in, launch the Sign In activity
             startActivity(Intent(this, SignInActivity::class.java))
             finish()
             return
         }
     }
-
-    private fun isLoggedIn() = auth.currentUser == null || auth.currentUser?.isAnonymous == true
 
     public override fun onPause() {
         adapter.stopListening()
